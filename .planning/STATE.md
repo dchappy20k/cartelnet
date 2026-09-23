@@ -2,8 +2,8 @@
 
 ## Current Position
 - **Milestone:** Milestone 1 — CartelNet MVP
-- **Active Phase:** Phase 3 (Risk Detection Engine & Explainable Scoring) — ✅ COMPLETED
-- **Next Phase:** Phase 4 (NetworkX Graph Projection & Interactive Visualization)
+- **Active Phase:** Phase 4 (NetworkX Graph Projection & Interactive Visualization) — ✅ COMPLETED
+- **Next Phase:** Phase 5 (Investigation Case Management & Report Generation)
 
 ---
 
@@ -13,31 +13,34 @@
 | **Phase 1** | Repository Structure & Monorepo Foundation | ✅ Completed |
 | **Phase 2** | Ingestion Pipeline & Data Normalization | ✅ Completed |
 | **Phase 3** | Risk Detection Engine & Explainable Scoring | ✅ Completed |
-| **Phase 4** | NetworkX Graph Projection & Interactive Visualization | ⏳ Next Up |
-| **Phase 5** | Investigation Case Management & Report Generation | ⏳ Pending |
+| **Phase 4** | NetworkX Graph Projection & Interactive Visualization | ✅ Completed |
+| **Phase 5** | Investigation Case Management & Report Generation | ⏳ Next Up |
 | **Phase 6** | Multi-Tenant Auth, Golden Path Seeding & Final Verification | ⏳ Pending |
 
 ---
 
-## Phase 3 Accomplishments
-1. **Deterministic Detector Subsystem:** Implemented 5 modular risk detectors in `apps/api/app/modules/risk/detectors/`:
-   - `PriceClusteringDetector` (`PRICE_CLUSTERING`): Coefficient of variation ($CV \le 1.5\%$) and narrow spread detection.
-   - `SharedDirectorDetector` (`SHARED_DIRECTORS`): Pairwise director intersection across competing bidders.
-   - `SharedAddressDetector` (`SHARED_ADDRESS`): Physical registration address and cluster hash collisions.
-   - `RepeatedParticipationDetector` (`REPEATED_PARTICIPATION`): High-frequency joint co-bidding patterns across multiple tenders.
-   - `HistoricalWinnerPatternDetector` (`HISTORICAL_ROTATION`): Systematic alternating winner patterns (bid rotation).
-2. **Composite Scoring Engine:** Implemented weighted scoring formula in `scoring.py`:
-   - Configurable base detector weights (15 to 35 pts) and severity multipliers (0.5 to 1.25).
-   - Generates 0–100 composite risk score and severity bands (`low`, `medium`, `high`, `critical`).
-3. **Evidence Persistence & Safety Contracts:**
-   - Every detected signal automatically persists underlying `Evidence` with JSON payloads (e.g. director names, bid amounts, CV%, co-bidding tender IDs).
-   - Enforced non-negotiable safety rules: No claims of legal guilt; all signals use "Risk Signal", "Elevated Risk", "Requires Human Review".
+## Phase 4 Accomplishments
+1. **NetworkX Entity Graph Projection Service (`apps/api/app/modules/network/service.py`):**
+   - Implemented relational entity projection: Tenders, Companies, Directors, Addresses, and Bids mapped into NetworkX graphs.
+   - Built deterministic force-directed layout computation (`nx.spring_layout`) normalized to standard 800x500 SVG coordinate system.
+   - Implemented ego-subgraph projection for focused single-tender analysis (`TND-8842` centered at (400, 250)).
+2. **Dense Collusion Cluster Discovery:**
+   - Detects `SHARED_DIRECTORS` and `SHARED_ADDRESS` clusters with full company listings and tender linkage.
+3. **Comprehensive Entity Dossier API:**
+   - Computes win/loss rates, total bid amounts, connected officers, historical co-bidders, and related risk signals.
 4. **API Endpoints:**
-   - `POST /api/v1/risk/tenders/{tender_id}/screen`
-   - `POST /api/v1/risk/screen-all`
-   - `GET /api/v1/risk/signals`
-   - `GET /api/v1/risk/rules`
-5. **Testing Verification:**
-   - **11/11 tests passing 100% in pytest** across health, ingestion, and risk engine modules.
-   - Verified that `TND-8842` triggers Price Clustering, Shared Directorship, and Shared Address ($Score \ge 70$, Critical), while clean control `TND-8790` scores 0 (Low).
-6. **Knowledge Graph Updated:** Indexed **598 nodes** and **1,143 edges** across **59 communities** in `.planning/graphs/graph.html`.
+   - `GET /api/v1/network/graph`: Global dynamic 2D graph with node/edge summaries.
+   - `GET /api/v1/network/tenders/{tender_id}/graph`: Tender ego-subgraph.
+   - `GET /api/v1/network/clusters`: Detected collusion clusters.
+   - `GET /api/v1/network/companies/{company_id}/dossier`: Full entity dossier.
+5. **Frontend Canvas & Live Integration (`apps/web`):**
+   - Type-safe API client in `apps/web/lib/api-client.ts` with offline resilience fallback.
+   - Interactive Network visualizer with tender scope selector (`All Entities`, `TND-8842`, `TND-8755`, `TND-8817`).
+   - Dynamic node and link counters in the glassmorphic card header.
+   - Enhanced `CompanyDrawer` rendering live corporate registry information, win rates, officers, co-bidders, and risk signals.
+6. **Testing & Build Verification:**
+   - **17/17 tests passing 100% in pytest** across health, ingestion, risk engine, and network graph modules.
+   - **All 11 Next.js web routes compiled cleanly** in production build (`npm run build`).
+7. **Institutional Documentation & GitHub Push:**
+   - Comprehensive end-to-end `README.md` with system architecture diagrams, deterministic detector specs, judge walkthrough guide, and quickstart instructions.
+   - Committed and pushed to `https://github.com/dchappy20k/cartelnet.git`.
