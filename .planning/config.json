@@ -1,0 +1,15 @@
+{
+  "project_name": "CartelNet",
+  "version": "1.0.0-mvp",
+  "workflow": {
+    "mode": "autonomous",
+    "verification_level": "standard",
+    "git_tracking": true
+  },
+  "stack": {
+    "frontend": "Next.js 16 + React 19 + Tailwind CSS + Lucide + Recharts",
+    "backend": "FastAPI + Pydantic + SQLAlchemy + NetworkX",
+    "database": "PostgreSQL",
+    "architecture": "Modular Monolith (apps/web + apps/api)"
+  }
+}
