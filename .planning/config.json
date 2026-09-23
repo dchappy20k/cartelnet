@@ -11,5 +11,8 @@
     "backend": "FastAPI + Pydantic + SQLAlchemy + NetworkX",
     "database": "PostgreSQL",
     "architecture": "Modular Monolith (apps/web + apps/api)"
+  },
+  "graphify": {
+    "enabled": true
   }
 }

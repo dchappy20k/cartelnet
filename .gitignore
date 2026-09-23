@@ -2,15 +2,34 @@
 .env
 .env*.local
 
-# Dependencies
+# Node
 node_modules/
+.next/
+out/
+build/
+dist/
+.pnpm-store/
+
+# Python
+.venv/
+env/
+venv/
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+htmlcov/
 
-# Build outputs
-dist/
-build/
+# Databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Archives
 *.zip
+*.tar.gz
 
 # IDE and OS
 .vscode/

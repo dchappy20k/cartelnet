@@ -1,0 +1,3 @@
+from app.db.base import Base, TenantAwareModel
+
+# Domain models for tenders
