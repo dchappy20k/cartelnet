@@ -1,0 +1,18 @@
+tender_ref,tender_title,authority_name,estimated_value,category,company_name,bid_amount,bid_status,directors,registered_address,submission_date
+TND-8842,Regional Highway Resurfacing Programme,National Roads Agency,48200000,Infrastructure,Meridian Civil Works Ltd.,46200000,Awarded,Arthur Vance; Elena Rostova,44 Kingsway Harbor District,2026-09-14
+TND-8842,Regional Highway Resurfacing Programme,National Roads Agency,48200000,Infrastructure,Apex Infrastructure Group,46900000,Runner-up,Arthur Vance; Brian Chen,44 Kingsway Harbor District,2026-09-14
+TND-8842,Regional Highway Resurfacing Programme,National Roads Agency,48200000,Infrastructure,Northgate Contracting,47400000,Rejected,Sarah Jenkins; Thomas Moore,8 Riverside Park,2026-09-14
+TND-8755,City Rail Signalling Maintenance,Metropolitan Transit Authority,31100000,Infrastructure,Apex Infrastructure Group,29800000,Awarded,Arthur Vance; Brian Chen,44 Kingsway Harbor District,2026-09-12
+TND-8755,City Rail Signalling Maintenance,Metropolitan Transit Authority,31100000,Infrastructure,Meridian Civil Works Ltd.,30400000,Runner-up,Arthur Vance; Elena Rostova,44 Kingsway Harbor District,2026-09-12
+TND-8755,City Rail Signalling Maintenance,Metropolitan Transit Authority,31100000,Infrastructure,RailTech Systems Inc,30950000,Rejected,David O'Connor; Michael Hall,12 Industrial Way,2026-09-12
+TND-8817,Municipal Water Treatment Upgrade,Metro Water Board,22750000,Utilities,Clearwater Utilities Corp,21500000,Awarded,Fiona Gallagher; Simon Shaw,90 Dockside Road,2026-09-10
+TND-8817,Municipal Water Treatment Upgrade,Metro Water Board,22750000,Utilities,AquaTech Solutions Ltd.,21650000,Runner-up,Fiona Gallagher; Robert Diaz,104 Waterfront Blvd,2026-09-10
+TND-8817,Municipal Water Treatment Upgrade,Metro Water Board,22750000,Utilities,PureFlow Engineering,22400000,Rejected,Liam Kelly; Rachel Adams,57 Canal Street,2026-09-10
+TND-8790,Public Hospital IT Modernisation,Health Infrastructure Dept.,15400000,Technology,Nova Systems UK,13200000,Awarded,Oliver Wright; Natalie Scott,200 High Street London,2026-08-25
+TND-8790,Public Hospital IT Modernisation,Health Infrastructure Dept.,15400000,Technology,MedTech Digital Solutions,14850000,Rejected,Hannah Reed,45 Queen Square Bath,2026-08-25
+TND-8790,Public Hospital IT Modernisation,Health Infrastructure Dept.,15400000,Technology,CoreLogic Infrastructure,15200000,Rejected,Samuel Jackson; Peter Fox,18 Innovation Way Cambridge,2026-08-25
+TND-8722,Government Cloud Hosting Framework,Digital Services Agency,27800000,Technology,CloudScale Networks,24100000,Awarded,Victoria Sterling,7 Silicon Row London,2026-08-15
+TND-8722,Government Cloud Hosting Framework,Digital Services Agency,27800000,Technology,Titan Data Services,25900000,Rejected,Marcus Brody,14 Enterprise Park Leeds,2026-08-15
+TND-8722,Government Cloud Hosting Framework,Digital Services Agency,27800000,Technology,Zenith Cloud Platform,26800000,Rejected,Laura Henderson,88 Tech Hub Bristol,2026-08-15
+TND-8701,Regional Airport Terminal Extension,Civil Aviation Authority,62500000,Infrastructure,Meridian Civil Works Ltd.,58900000,Awarded,Arthur Vance; Elena Rostova,44 Kingsway Harbor District,2026-08-01
+TND-8701,Regional Airport Terminal Extension,Civil Aviation Authority,62500000,Infrastructure,Skyline BuildCorp,61200000,Rejected,Charles Montgomery,3 Terminal Road Manchester,2026-08-01

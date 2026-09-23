@@ -31,6 +31,9 @@ htmlcov/
 *.zip
 *.tar.gz
 
+# Graphify
+graphify-out/
+
 # IDE and OS
 .vscode/
 .idea/
