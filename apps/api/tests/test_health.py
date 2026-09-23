@@ -12,4 +12,4 @@ def test_api_v1_router_mounted(client):
     """Verify that /api/v1/ prefix routes are mounted and responsive."""
     response = client.get("/api/v1/tenders/")
     assert response.status_code == 200
-    assert response.json()["module"] == "tenders"
+    assert isinstance(response.json(), list)

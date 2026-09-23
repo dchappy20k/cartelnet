@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     DEBUG: bool = False
     PORT: int = 8000
     API_V1_PREFIX: str = "/api/v1"
+    DEFAULT_ORG_ID: str = "org-cartelnet-demo"
 
     # Security
     SECRET_KEY: str = "cartelnet-default-insecure-dev-secret-key-change-in-prod"
@@ -48,3 +49,4 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+DEFAULT_ORG_ID = settings.DEFAULT_ORG_ID
