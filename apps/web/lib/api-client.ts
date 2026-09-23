@@ -1,5 +1,5 @@
 import { graphNodes, graphEdges, type GraphNode, type GraphEdge } from "@/components/network/graph-data"
-import { companies, type Company } from "@/lib/data"
+import { companies, investigations as mockInvestigations, type Company, type Investigation as MockInvestigation } from "@/lib/data"
 
 export const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1"
 
@@ -55,6 +55,72 @@ export interface ApiCompanyDossier {
   }>
 }
 
+export interface ApiInvestigation {
+  id: string
+  case_ref: string
+  title: string
+  priority: "Low" | "Medium" | "High" | "Critical"
+  status: "Open" | "Under Review" | "Escalated" | "Closed"
+  investigator: string
+  tender_id?: string
+  tender_ref?: string
+  entities_count: number
+  signals_count: number
+  created_at: string
+  updated_at: string
+  notes: Array<{
+    id: string
+    author_name: string
+    content: string
+    created_at: string
+  }>
+}
+
+export interface ApiInvestigationDetail extends ApiInvestigation {
+  tender_title?: string
+  tender_authority?: string
+  tender_value?: number
+  tender_risk_score?: number
+  bidders: Array<{
+    bid_id: string
+    company_id: string
+    company_name: string
+    amount: number
+    status: string
+  }>
+  signals: Array<{
+    id: string
+    detector_code: string
+    title: string
+    severity: string
+    confidence: number
+    score_contribution: number
+    description: string
+    explanation: string
+    evidence?: Array<{
+      id: string
+      source_type: string
+      summary: string
+      data_payload?: any
+    }>
+  }>
+}
+
+export interface ApiReportResponse {
+  report_id: string
+  report_title: string
+  generated_at: string
+  report_type: string
+  format: string
+  target_id: string
+  risk_score?: number
+  risk_level?: string
+  executive_summary: string
+  evidence_log: any[]
+  entities_involved: any[]
+  rendered_content?: string
+}
+
 /**
  * Fetch the global entity network graph
  */
@@ -64,7 +130,6 @@ export async function getGlobalGraph(): Promise<ApiGraphResponse> {
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     return await res.json()
   } catch (err) {
-    // Fallback to local graph
     return {
       nodes: graphNodes,
       edges: graphEdges,
@@ -114,7 +179,6 @@ export async function getCompanyDossier(companyId: string): Promise<ApiCompanyDo
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     return await res.json()
   } catch (err) {
-    // Fallback mapping from static companies dictionary
     const fallback = companies[companyId]
     if (!fallback) return null
     return {
@@ -140,4 +204,139 @@ export async function getCompanyDossier(companyId: string): Promise<ApiCompanyDo
       }],
     }
   }
+}
+
+/**
+ * Fetch all investigation cases
+ */
+export async function listInvestigations(filters?: { status?: string; priority?: string }): Promise<ApiInvestigation[]> {
+  try {
+    const params = new URLSearchParams()
+    if (filters?.status) params.set("status", filters.status)
+    if (filters?.priority) params.set("priority", filters.priority)
+
+    const res = await fetch(`${API_BASE}/investigations/?${params.toString()}`, { cache: "no-store" })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    const data = await res.json()
+    return data
+  } catch (err) {
+    // Fallback to mock investigations
+    return mockInvestigations.map((inv) => ({
+      id: inv.id,
+      case_ref: inv.id,
+      title: inv.title,
+      priority: inv.priority as any,
+      status: inv.status as any,
+      investigator: inv.investigator,
+      entities_count: inv.entities,
+      signals_count: inv.signals,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      notes: [],
+    }))
+  }
+}
+
+/**
+ * Create a new investigation case
+ */
+export async function createInvestigation(payload: {
+  title: string
+  tender_id?: string
+  priority?: string
+  investigator?: string
+  initial_note?: string
+}): Promise<ApiInvestigation> {
+  const res = await fetch(`${API_BASE}/investigations/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  return await res.json()
+}
+
+/**
+ * Fetch 360-degree investigation details
+ */
+export async function getInvestigationDetail(identifier: string): Promise<ApiInvestigationDetail | null> {
+  try {
+    const res = await fetch(`${API_BASE}/investigations/${encodeURIComponent(identifier)}`, { cache: "no-store" })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    return await res.json()
+  } catch (err) {
+    const mock = mockInvestigations.find((i) => i.id === identifier)
+    if (!mock) return null
+    return {
+      id: mock.id,
+      case_ref: mock.id,
+      title: mock.title,
+      priority: mock.priority as any,
+      status: mock.status as any,
+      investigator: mock.investigator,
+      entities_count: mock.entities,
+      signals_count: mock.signals,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      notes: [
+        {
+          id: "n-1",
+          author_name: mock.investigator,
+          content: "Case initiated from automated procurement risk screen.",
+          created_at: new Date().toISOString(),
+        },
+      ],
+      bidders: [],
+      signals: [],
+    }
+  }
+}
+
+/**
+ * Add note to investigation
+ */
+export async function addInvestigationNote(identifier: string, content: string, authorName = "Investigator"): Promise<any> {
+  const res = await fetch(`${API_BASE}/investigations/${encodeURIComponent(identifier)}/notes`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ content, author_name: authorName }),
+  })
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  return await res.json()
+}
+
+/**
+ * Update investigation status or priority
+ */
+export async function updateInvestigation(identifier: string, payload: {
+  status?: string
+  priority?: string
+  investigator?: string
+  note?: string
+}): Promise<ApiInvestigation> {
+  const res = await fetch(`${API_BASE}/investigations/${encodeURIComponent(identifier)}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  return await res.json()
+}
+
+/**
+ * Generate audit report
+ */
+export async function generateReport(payload: {
+  report_type: "TENDER_RISK_AUDIT" | "INVESTIGATION_CASE_DOSSIER"
+  target_id: string
+  format?: "HTML" | "MARKDOWN" | "JSON"
+  auditor_name?: string
+}): Promise<ApiReportResponse> {
+  const res = await fetch(`${API_BASE}/reports/generate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  return await res.json()
 }

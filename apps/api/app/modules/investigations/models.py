@@ -3,6 +3,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from typing import List, Optional
 
 from app.db.base import TenantAwareModel
+from app.modules.tenders.models import Tender
 
 
 class Investigation(TenantAwareModel):
@@ -12,13 +13,14 @@ class Investigation(TenantAwareModel):
     tender_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("tenders.id", ondelete="SET NULL"), nullable=True)
     case_ref: Mapped[str] = mapped_column(String(50), index=True, nullable=False)
     title: Mapped[str] = mapped_column(String(500), nullable=False)
-    priority: Mapped[str] = mapped_column(String(20), default="Medium", nullable=False)  # High, Medium, Low
+    priority: Mapped[str] = mapped_column(String(20), default="Medium", nullable=False)  # High, Medium, Low, Critical
     status: Mapped[str] = mapped_column(String(50), default="Open", nullable=False)  # Under Review, Open, Escalated, Closed
     investigator: Mapped[str] = mapped_column(String(255), default="Unassigned", nullable=False)
     entities_count: Mapped[int] = mapped_column(default=0, nullable=False)
     signals_count: Mapped[int] = mapped_column(default=0, nullable=False)
 
-    notes: Mapped[List["InvestigationNote"]] = relationship("InvestigationNote", back_populates="investigation", cascade="all, delete-orphan")
+    tender: Mapped[Optional["Tender"]] = relationship("Tender")
+    notes: Mapped[List["InvestigationNote"]] = relationship("InvestigationNote", back_populates="investigation", cascade="all, delete-orphan", order_by="desc(InvestigationNote.created_at)")
 
 
 class InvestigationNote(TenantAwareModel):
