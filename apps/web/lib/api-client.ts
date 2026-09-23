@@ -340,3 +340,51 @@ export async function generateReport(payload: {
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   return await res.json()
 }
+
+/**
+ * Seed benchmark procurement dataset
+ */
+export async function seedDemoData(): Promise<any> {
+  const res = await fetch(`${API_BASE}/ingestion/demo-seed`, { method: "POST" })
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  return await res.json()
+}
+
+/**
+ * Run risk screening across all tenders
+ */
+export async function screenAllTenders(): Promise<any> {
+  const res = await fetch(`${API_BASE}/risk/screen-all`, { method: "POST" })
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  return await res.json()
+}
+
+/**
+ * List tenders with optional filtering
+ */
+export async function listTenders(params?: { search?: string; status?: string; risk_level?: string }): Promise<any[]> {
+  try {
+    const q = new URLSearchParams()
+    if (params?.search) q.set("search", params.search)
+    if (params?.status) q.set("status", params.status)
+    if (params?.risk_level) q.set("risk_level", params.risk_level)
+    const res = await fetch(`${API_BASE}/tenders/?${q.toString()}`, { cache: "no-store" })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    return await res.json()
+  } catch (err) {
+    return []
+  }
+}
+
+/**
+ * Fetch complete Tender 360 dossier
+ */
+export async function getTender360(tenderId: string): Promise<any | null> {
+  try {
+    const res = await fetch(`${API_BASE}/tenders/${encodeURIComponent(tenderId)}`, { cache: "no-store" })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    return await res.json()
+  } catch (err) {
+    return null
+  }
+}
