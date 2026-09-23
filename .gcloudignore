@@ -1,0 +1,11 @@
+# This file specifies files that should not be uploaded to Google Cloud
+.git/
+.gitignore
+.env
+__pycache__/
+*.pyc
+node_modules/
+dist/
+build/
+.vscode/
+.idea/
