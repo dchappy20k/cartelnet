@@ -26,6 +26,8 @@ class Company(TenantAwareModel):
     legal_name: Mapped[str] = mapped_column(String(255), nullable=False)
     normalized_name: Mapped[str] = mapped_column(String(255), index=True, nullable=False)
     tax_id: Mapped[Optional[str]] = mapped_column(String(100), index=True, nullable=True)
+    source_company_id: Mapped[Optional[str]] = mapped_column(String(100), index=True, nullable=True)
+    source_upload_id: Mapped[Optional[str]] = mapped_column(String(50), index=True, nullable=True)
     address_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("addresses.id", ondelete="SET NULL"), nullable=True)
     status: Mapped[str] = mapped_column(String(50), default="Active", nullable=False)
 

@@ -419,3 +419,122 @@ export async function getTender360(tenderId: string): Promise<any | null> {
     return null
   }
 }
+
+export interface ValidationErrorDetail {
+  path: string
+  message: string
+  code?: string
+}
+
+export interface GovernmentValidationResponse {
+  success: boolean
+  upload_id: string
+  status: "VALID" | "INVALID"
+  summary: {
+    departments: number
+    tenders: number
+    companies: number
+    bidders: number
+    total_estimated_value: number
+  }
+  errors: ValidationErrorDetail[]
+  warnings: string[]
+}
+
+export interface GovernmentImportResponse {
+  success: boolean
+  upload_id: string
+  status: "IMPORTED" | "ROLLED_BACK" | "FAILED" | "INVALID"
+  summary: {
+    departments: number
+    tenders: number
+    companies: number
+    participants: number
+    bids: number
+  }
+  errors: ValidationErrorDetail[]
+  warnings: string[]
+  processing_duration_ms: number
+}
+
+export interface GovernmentUploadAudit {
+  upload_id: string
+  department_id?: string
+  department_code?: string
+  uploaded_by: string
+  filename: string
+  file_size: number
+  status: string
+  records_received?: Record<string, any>
+  records_imported?: Record<string, any>
+  records_failed: number
+  validation_errors?: ValidationErrorDetail[]
+  processing_duration_ms: number
+  created_at: string
+}
+
+/**
+ * Validate a government procurement JSON file without database modifications (dry run)
+ */
+export async function validateGovernmentJson(file: File): Promise<GovernmentValidationResponse> {
+  const formData = new FormData()
+  formData.append("file", file)
+
+  const res = await fetch(`${API_BASE}/government/uploads/validate`, {
+    method: "POST",
+    body: formData,
+  })
+
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({ detail: `HTTP ${res.status}` }))
+    throw new Error(errData.detail || `Validation request failed with HTTP ${res.status}`)
+  }
+
+  return await res.json()
+}
+
+/**
+ * Atomically import a validated government procurement JSON file into the database
+ */
+export async function importGovernmentJson(file: File): Promise<GovernmentImportResponse> {
+  const formData = new FormData()
+  formData.append("file", file)
+
+  const res = await fetch(`${API_BASE}/government/uploads/import`, {
+    method: "POST",
+    body: formData,
+  })
+
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({ detail: `HTTP ${res.status}` }))
+    throw new Error(errData.detail || `Import request failed with HTTP ${res.status}`)
+  }
+
+  return await res.json()
+}
+
+/**
+ * List historical government JSON upload audit logs
+ */
+export async function listGovernmentUploads(limit = 20): Promise<GovernmentUploadAudit[]> {
+  try {
+    const res = await fetch(`${API_BASE}/government/uploads/?limit=${limit}`, { cache: "no-store" })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    return await res.json()
+  } catch (err) {
+    return []
+  }
+}
+
+/**
+ * Fetch detailed audit record by upload ID
+ */
+export async function getGovernmentUploadDetail(uploadId: string): Promise<GovernmentUploadAudit | null> {
+  try {
+    const res = await fetch(`${API_BASE}/government/uploads/${encodeURIComponent(uploadId)}`, { cache: "no-store" })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    return await res.json()
+  } catch (err) {
+    return null
+  }
+}

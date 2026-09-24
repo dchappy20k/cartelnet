@@ -10,6 +10,7 @@ from app.modules.network.router import router as network_router
 from app.modules.investigations.router import router as investigations_router
 from app.modules.ingestion.router import router as ingestion_router
 from app.modules.reports.router import router as reports_router
+from app.modules.government_uploads.router import router as government_uploads_router
 
 api_router = APIRouter()
 
@@ -23,3 +24,4 @@ api_router.include_router(network_router)
 api_router.include_router(investigations_router)
 api_router.include_router(ingestion_router)
 api_router.include_router(reports_router)
+api_router.include_router(government_uploads_router)

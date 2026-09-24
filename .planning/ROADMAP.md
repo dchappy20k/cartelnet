@@ -60,3 +60,14 @@ The goal of Milestone 1 is to deliver a fully functional, explainable procuremen
   - Organization onboarding (Government Authority vs Company)
   - End-to-end verification of the Golden Flow:
     `Login → Load Demo → Open Tender 360 → Run Risk Screen → Inspect Evidence Signals → Explore Network → Open Investigation → Generate Report`
+
+### Phase 7: Government JSON Bulk Upload & Enterprise Ingestion
+- **Goal:** Enable authorized government users to upload, strictly validate, and atomically commit JSON-only tender dossiers directly into PostgreSQL/SQLite with deduplication, full provenance, audit logging, and downstream risk screening.
+- **Deliverables:**
+  - Dedicated `government_uploads` module in `apps/api/app/modules/government_uploads/`
+  - Relational models: `GovernmentDepartment`, `TenderParticipant`, `GovernmentUploadAudit`
+  - Strict Pydantic v2 schemas and JSON integrity validators
+  - Atomic database transaction engine with rollback on failure
+  - REST endpoints: `validate`, `import`, `history`, `upload_id`, `sample-template`
+  - Overhauled Next.js Government Data Ingestion Dashboard (`apps/web/app/(app)/data/page.tsx`) with drag-and-drop, real-time validation, and audit table
+  - Comprehensive automated test suite in `apps/api/tests/test_government_json_upload.py`

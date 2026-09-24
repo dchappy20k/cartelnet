@@ -12,7 +12,9 @@ class Bid(TenantAwareModel):
     tender_id: Mapped[str] = mapped_column(String(36), ForeignKey("tenders.id", ondelete="CASCADE"), index=True, nullable=False)
     company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id", ondelete="CASCADE"), index=True, nullable=False)
     amount: Mapped[float] = mapped_column(Float, nullable=False)
-    status: Mapped[str] = mapped_column(String(50), default="Submitted", nullable=False)  # Awarded, Runner-up, Rejected, Withdrawn, Submitted
+    bid_rank: Mapped[Optional[int]] = mapped_column(nullable=True)
+    status: Mapped[str] = mapped_column(String(50), default="Submitted", nullable=False)  # Awarded, Runner-up, Rejected, Withdrawn, Submitted, Qualified, Disqualified
+    source_upload_id: Mapped[Optional[str]] = mapped_column(String(50), index=True, nullable=True)
     submitted_at: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
 
     tender: Mapped["Tender"] = relationship("Tender", back_populates="bids")

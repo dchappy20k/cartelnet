@@ -29,6 +29,7 @@ def init_db():
     import app.modules.risk.models           # noqa
     import app.modules.investigations.models # noqa
     import app.modules.ingestion.models      # noqa
+    import app.modules.government_uploads.models # noqa
 
     Base.metadata.create_all(bind=engine)
 
