@@ -538,3 +538,118 @@ export async function getGovernmentUploadDetail(uploadId: string): Promise<Gover
     return null
   }
 }
+
+// ============================================================================
+// REAL PROCUREMENT GRAPH INTELLIGENCE CLIENT METHODS
+// ============================================================================
+
+export interface EntitySearchResult {
+  id: string
+  label: string
+  type: string
+  risk_level?: string
+  subtitle?: string
+}
+
+export interface GraphSignalOut {
+  id: string
+  signal_type: string
+  title: string
+  severity: "low" | "medium" | "high" | "critical"
+  confidence: number
+  explanation: string
+  evidence: any[]
+  entity_ids: string[]
+}
+
+export interface CreateInvestigationFromNodePayload {
+  entity_id: string
+  entity_type: string
+  entity_label: string
+  notes?: string
+  priority?: "low" | "medium" | "high" | "critical"
+}
+
+/**
+ * Fetch neighborhood ego-graph for any entity up to depth 3
+ */
+export async function getEntityNeighbors(entityId: string, depth = 2): Promise<ApiGraphResponse> {
+  try {
+    const res = await fetch(`${API_BASE}/network/entity/${encodeURIComponent(entityId)}/neighbors?depth=${depth}`, {
+      cache: "no-store",
+    })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    return await res.json()
+  } catch (err) {
+    console.error("Failed to fetch entity neighbors:", err)
+    return getGlobalGraph()
+  }
+}
+
+/**
+ * Search entities across companies, tenders, directors, and addresses
+ */
+export async function searchGraphEntities(query: string, entityType?: string): Promise<EntitySearchResult[]> {
+  try {
+    const params = new URLSearchParams({ q: query })
+    if (entityType && entityType !== "all") {
+      params.set("entity_type", entityType)
+    }
+    const res = await fetch(`${API_BASE}/network/search?${params.toString()}`, { cache: "no-store" })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    return await res.json()
+  } catch (err) {
+    console.error("Failed to search graph entities:", err)
+    return []
+  }
+}
+
+/**
+ * Fetch temporal time-sliced graph
+ */
+export async function getTemporalGraph(startYear?: number, endYear?: number): Promise<ApiGraphResponse> {
+  try {
+    const params = new URLSearchParams()
+    if (startYear) params.set("start_year", startYear.toString())
+    if (endYear) params.set("end_year", endYear.toString())
+    const res = await fetch(`${API_BASE}/network/temporal?${params.toString()}`, { cache: "no-store" })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    return await res.json()
+  } catch (err) {
+    console.error("Failed to fetch temporal graph:", err)
+    return getGlobalGraph()
+  }
+}
+
+/**
+ * Fetch explainable topological risk signals
+ */
+export async function getGraphSignals(entityId?: string): Promise<GraphSignalOut[]> {
+  try {
+    const params = new URLSearchParams()
+    if (entityId) params.set("entity_id", entityId)
+    const res = await fetch(`${API_BASE}/network/signals?${params.toString()}`, { cache: "no-store" })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    return await res.json()
+  } catch (err) {
+    console.error("Failed to fetch graph signals:", err)
+    return []
+  }
+}
+
+/**
+ * Create a real investigation directly from a graph entity node
+ */
+export async function createInvestigationFromNode(payload: CreateInvestigationFromNodePayload): Promise<any> {
+  const res = await fetch(`${API_BASE}/network/investigations/create-from-node`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({ detail: `HTTP ${res.status}` }))
+    throw new Error(errData.detail || `Failed to create investigation: HTTP ${res.status}`)
+  }
+  return await res.json()
+}
+
