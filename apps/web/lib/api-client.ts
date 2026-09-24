@@ -237,6 +237,8 @@ export async function listInvestigations(filters?: { status?: string; priority?:
   }
 }
 
+export const getInvestigations = listInvestigations
+
 /**
  * Create a new investigation case
  */
@@ -329,7 +331,7 @@ export async function updateInvestigation(identifier: string, payload: {
 export async function generateReport(payload: {
   report_type: "TENDER_RISK_AUDIT" | "INVESTIGATION_CASE_DOSSIER"
   target_id: string
-  format?: "HTML" | "MARKDOWN" | "JSON"
+  format?: "HTML" | "MARKDOWN" | "JSON" | "PDF"
   auditor_name?: string
 }): Promise<ApiReportResponse> {
   const res = await fetch(`${API_BASE}/reports/generate`, {
@@ -339,6 +341,35 @@ export async function generateReport(payload: {
   })
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   return await res.json()
+}
+
+/**
+ * Get direct public download URL for a report PDF
+ */
+export function getReportPdfUrl(targetId: string, reportType?: string, auditorName?: string): string {
+  const params = new URLSearchParams()
+  params.set("target_id", targetId)
+  if (reportType) params.set("report_type", reportType)
+  if (auditorName) params.set("auditor_name", auditorName)
+  return `${API_BASE}/reports/export/pdf?${params.toString()}`
+}
+
+/**
+ * Trigger browser download of PDF report
+ */
+export async function downloadReportPdf(targetId: string, filename?: string): Promise<void> {
+  const url = `${API_BASE}/reports/public/download/${encodeURIComponent(targetId)}`
+  const res = await fetch(url)
+  if (!res.ok) throw new Error(`Failed to download report PDF (HTTP ${res.status})`)
+  const blob = await res.blob()
+  const blobUrl = window.URL.createObjectURL(blob)
+  const a = document.createElement("a")
+  a.href = blobUrl
+  a.download = filename || `CartelNet_Audit_Report_${targetId}.pdf`
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  window.URL.revokeObjectURL(blobUrl)
 }
 
 /**

@@ -3,7 +3,7 @@
 import { use, useState } from "react"
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { ArrowLeft, Building2, Calendar, Users, Coins } from "lucide-react"
+import { ArrowLeft, Building2, Calendar, Users, Coins, FileDown } from "lucide-react"
 import { PageHeader } from "@/components/shell/page-header"
 import { GlassCard } from "@/components/glass/glass-card"
 import { GlassButton } from "@/components/glass/glass-button"
@@ -13,6 +13,7 @@ import { RiskBadge } from "@/components/glass/risk-badge"
 import { RiskMeter } from "@/components/glass/risk-meter"
 import { SignalRow } from "@/components/signals/signal-row"
 import { tenders, signals, formatCurrency } from "@/lib/data"
+import { downloadReportPdf } from "@/lib/api-client"
 
 const TABS = ["Overview", "Bidders", "Risk Signals", "Network", "Timeline", "Evidence", "Investigation"]
 
@@ -48,7 +49,20 @@ export default function Tender360({ params }: { params: Promise<{ id: string }> 
           <PageHeader
             title={tender.name}
             subtitle={`${tender.id} · ${tender.authority}`}
-            actions={<RiskBadge level={tender.risk} />}
+            actions={
+              <div className="flex items-center gap-2">
+                <RiskBadge level={tender.risk} />
+                <GlassButton
+                  size="sm"
+                  variant="accent"
+                  onClick={() => downloadReportPdf(tender.id, `CartelNet_Risk_Audit_${tender.id}.pdf`)}
+                  className="gap-1.5"
+                >
+                  <FileDown className="h-4 w-4" />
+                  Download PDF Report
+                </GlassButton>
+              </div>
+            }
           />
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             {[

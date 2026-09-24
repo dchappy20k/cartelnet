@@ -3,7 +3,7 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 
 ReportType = Literal["TENDER_RISK_AUDIT", "INVESTIGATION_CASE_DOSSIER"]
-ReportFormat = Literal["JSON", "HTML", "MARKDOWN"]
+ReportFormat = Literal["JSON", "HTML", "MARKDOWN", "PDF"]
 
 
 class ReportGenerateRequest(BaseModel):

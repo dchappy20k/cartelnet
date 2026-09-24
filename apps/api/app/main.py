@@ -7,9 +7,13 @@ from app.core.errors import CartelNetException, cartelnet_exception_handler
 from app.api.router import api_router
 
 
+from app.db.session import init_db
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup tasks
+    init_db()
     yield
     # Shutdown tasks
 

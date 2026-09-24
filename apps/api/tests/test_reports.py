@@ -89,3 +89,33 @@ def test_report_target_not_found(client):
     }
     res = client.post("/api/v1/reports/generate", json=req)
     assert res.status_code == 404
+
+
+def test_tender_risk_pdf_export(client):
+    client.post("/api/v1/ingestion/demo-seed")
+    client.post("/api/v1/risk/tenders/TND-8842/screen")
+
+    # Test GET export/pdf
+    res_get = client.get("/api/v1/reports/export/pdf?target_id=TND-8842&report_type=TENDER_RISK_AUDIT")
+    assert res_get.status_code == 200
+    assert res_get.headers["content-type"] == "application/pdf"
+    assert "CartelNet_Risk_Audit_TND-8842.pdf" in res_get.headers.get("content-disposition", "")
+    assert res_get.content.startswith(b"%PDF")
+
+    # Test public download shortcut endpoint
+    res_pub = client.get("/api/v1/reports/public/download/TND-8842")
+    assert res_pub.status_code == 200
+    assert res_pub.headers["content-type"] == "application/pdf"
+    assert res_pub.content.startswith(b"%PDF")
+
+    # Test POST export/pdf
+    req = {
+        "report_type": "TENDER_RISK_AUDIT",
+        "target_id": "TND-8842",
+        "format": "PDF",
+    }
+    res_post = client.post("/api/v1/reports/export/pdf", json=req)
+    assert res_post.status_code == 200
+    assert res_post.headers["content-type"] == "application/pdf"
+    assert res_post.content.startswith(b"%PDF")
+
