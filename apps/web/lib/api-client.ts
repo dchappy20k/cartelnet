@@ -578,7 +578,10 @@ export async function getEntityNeighbors(entityId: string, depth = 2): Promise<A
     const res = await fetch(`${API_BASE}/network/entity/${encodeURIComponent(entityId)}/neighbors?depth=${depth}`, {
       cache: "no-store",
     })
-    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    if (!res.ok) {
+      console.warn(`getEntityNeighbors returned HTTP ${res.status}`)
+      return getGlobalGraph()
+    }
     return await res.json()
   } catch (err) {
     console.error("Failed to fetch entity neighbors:", err)
@@ -596,7 +599,10 @@ export async function searchGraphEntities(query: string, entityType?: string): P
       params.set("entity_type", entityType)
     }
     const res = await fetch(`${API_BASE}/network/search?${params.toString()}`, { cache: "no-store" })
-    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    if (!res.ok) {
+      console.warn(`searchGraphEntities returned HTTP ${res.status}`)
+      return []
+    }
     return await res.json()
   } catch (err) {
     console.error("Failed to search graph entities:", err)
@@ -613,7 +619,10 @@ export async function getTemporalGraph(startYear?: number, endYear?: number): Pr
     if (startYear) params.set("start_year", startYear.toString())
     if (endYear) params.set("end_year", endYear.toString())
     const res = await fetch(`${API_BASE}/network/temporal?${params.toString()}`, { cache: "no-store" })
-    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    if (!res.ok) {
+      console.warn(`getTemporalGraph returned HTTP ${res.status}`)
+      return getGlobalGraph()
+    }
     return await res.json()
   } catch (err) {
     console.error("Failed to fetch temporal graph:", err)
@@ -629,7 +638,10 @@ export async function getGraphSignals(entityId?: string): Promise<GraphSignalOut
     const params = new URLSearchParams()
     if (entityId) params.set("entity_id", entityId)
     const res = await fetch(`${API_BASE}/network/signals?${params.toString()}`, { cache: "no-store" })
-    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    if (!res.ok) {
+      console.warn(`getGraphSignals returned HTTP ${res.status}`)
+      return []
+    }
     return await res.json()
   } catch (err) {
     console.error("Failed to fetch graph signals:", err)
