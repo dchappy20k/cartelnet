@@ -122,25 +122,38 @@ export interface ApiReportResponse {
   rendered_content?: string
 }
 
+export const defaultGraphData: ApiGraphResponse = {
+  nodes: graphNodes,
+  edges: graphEdges,
+  summary: {
+    total_nodes: graphNodes.length,
+    total_edges: graphEdges.length,
+    entity_counts: { tender: 1, company: 3, director: 1, address: 1, bid: 3, subcontractor: 1 },
+    risk_summary: { low: 4, medium: 2, high: 3, critical: 1 },
+  },
+}
+
+export async function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutMs = 1500): Promise<Response> {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), timeoutMs)
+  try {
+    const res = await fetch(url, { ...options, signal: controller.signal })
+    return res
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
 /**
  * Fetch the global entity network graph
  */
 export async function getGlobalGraph(): Promise<ApiGraphResponse> {
   try {
-    const res = await fetch(`${API_BASE}/network/graph`, { cache: "no-store" })
+    const res = await fetchWithTimeout(`${API_BASE}/network/graph`, { cache: "no-store" }, 1500)
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     return await res.json()
   } catch (err) {
-    return {
-      nodes: graphNodes,
-      edges: graphEdges,
-      summary: {
-        total_nodes: graphNodes.length,
-        total_edges: graphEdges.length,
-        entity_counts: { tender: 1, company: 3, director: 1, address: 1, bid: 3, subcontractor: 1 },
-        risk_summary: { low: 4, medium: 2, high: 3, critical: 1 },
-      },
-    }
+    return defaultGraphData
   }
 }
 
@@ -576,17 +589,19 @@ export interface CreateInvestigationFromNodePayload {
  */
 export async function getEntityNeighbors(entityId: string, depth = 2): Promise<ApiGraphResponse> {
   try {
-    const res = await fetch(`${API_BASE}/network/entity/${encodeURIComponent(entityId)}/neighbors?depth=${depth}`, {
-      cache: "no-store",
-    })
+    const res = await fetchWithTimeout(
+      `${API_BASE}/network/entity/${encodeURIComponent(entityId)}/neighbors?depth=${depth}`,
+      { cache: "no-store" },
+      1500
+    )
     if (!res.ok) {
       console.warn(`getEntityNeighbors returned HTTP ${res.status}`)
-      return getGlobalGraph()
+      return defaultGraphData
     }
     return await res.json()
   } catch (err) {
     console.warn("Backend API unreachable, using fallback graph for entity neighbors:", err)
-    return getGlobalGraph()
+    return defaultGraphData
   }
 }
 
@@ -599,7 +614,7 @@ export async function searchGraphEntities(query: string, entityType?: string): P
     if (entityType && entityType !== "all") {
       params.set("entity_type", entityType)
     }
-    const res = await fetch(`${API_BASE}/network/search?${params.toString()}`, { cache: "no-store" })
+    const res = await fetchWithTimeout(`${API_BASE}/network/search?${params.toString()}`, { cache: "no-store" }, 1500)
     if (!res.ok) {
       console.warn(`searchGraphEntities returned HTTP ${res.status}`)
       return []
@@ -619,15 +634,15 @@ export async function getTemporalGraph(startYear?: number, endYear?: number): Pr
     const params = new URLSearchParams()
     if (startYear) params.set("start_year", startYear.toString())
     if (endYear) params.set("end_year", endYear.toString())
-    const res = await fetch(`${API_BASE}/network/temporal?${params.toString()}`, { cache: "no-store" })
+    const res = await fetchWithTimeout(`${API_BASE}/network/temporal?${params.toString()}`, { cache: "no-store" }, 1500)
     if (!res.ok) {
       console.warn(`getTemporalGraph returned HTTP ${res.status}`)
-      return getGlobalGraph()
+      return defaultGraphData
     }
     return await res.json()
   } catch (err) {
     console.warn("Backend API unreachable, using fallback graph for temporal:", err)
-    return getGlobalGraph()
+    return defaultGraphData
   }
 }
 
@@ -671,7 +686,7 @@ export async function getGraphSignals(entityId?: string): Promise<GraphSignalOut
   try {
     const params = new URLSearchParams()
     if (entityId) params.set("entity_id", entityId)
-    const res = await fetch(`${API_BASE}/network/signals?${params.toString()}`, { cache: "no-store" })
+    const res = await fetchWithTimeout(`${API_BASE}/network/signals?${params.toString()}`, { cache: "no-store" }, 1500)
     if (!res.ok) {
       console.warn(`getGraphSignals returned HTTP ${res.status}`)
       return mockGraphSignals

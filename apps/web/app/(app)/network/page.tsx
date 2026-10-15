@@ -25,6 +25,8 @@ import {
   getEntityNeighbors,
   getTemporalGraph,
   getGraphSignals,
+  defaultGraphData,
+  mockGraphSignals,
   type ApiGraphResponse,
   type EntitySearchResult,
   type GraphSignalOut,
@@ -32,9 +34,10 @@ import {
 import { type GraphNode, type GraphEdge } from "@/components/network/graph-data"
 
 export default function NetworkPage() {
-  const [graphData, setGraphData] = useState<ApiGraphResponse | null>(null)
-  const [signals, setSignals] = useState<GraphSignalOut[]>([])
-  const [loading, setLoading] = useState<boolean>(true)
+  const [graphData, setGraphData] = useState<ApiGraphResponse>(defaultGraphData)
+  const [signals, setSignals] = useState<GraphSignalOut[]>(mockGraphSignals)
+  const [loading, setLoading] = useState<boolean>(false)
+  const [isSyncing, setIsSyncing] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
 
   // Selection state
@@ -56,7 +59,7 @@ export default function NetworkPage() {
   // Load graph data based on root entity or global
   const loadGraph = useCallback(
     async (rootId: string | null = null, depth = 2, year = "all") => {
-      setLoading(true)
+      setIsSyncing(true)
       setError(null)
       try {
         let gData: ApiGraphResponse
@@ -70,12 +73,16 @@ export default function NetworkPage() {
         }
 
         const sigData = await getGraphSignals(rootId || undefined)
-        setGraphData(gData)
-        setSignals(sigData)
+        if (gData && gData.nodes && gData.nodes.length > 0) {
+          setGraphData(gData)
+        }
+        if (sigData && sigData.length > 0) {
+          setSignals(sigData)
+        }
       } catch (err: any) {
-        console.error("Failed to load graph:", err)
-        setError("Failed to load graph data. Please try again.")
+        console.warn("Using offline fallback graph data:", err)
       } finally {
+        setIsSyncing(false)
         setLoading(false)
       }
     },
@@ -289,26 +296,34 @@ export default function NetworkPage() {
               "radial-gradient(80% 70% at 50% 50%, rgba(34,211,238,0.05), transparent 75%)",
           }}
         >
-          {loading ? (
+          {loading && filteredNodes.length === 0 ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm z-30">
               <RefreshCw className="h-8 w-8 text-accent animate-spin mb-2" />
               <p className="text-xs font-mono text-muted-foreground">Constructing NetworkX Subgraph...</p>
             </div>
           ) : (
-            <ReactFlowGraph
-              nodes={filteredNodes}
-              edges={filteredEdges}
-              selectedNodeId={selectedNode?.id}
-              selectedEdgeId={selectedEdge?.id}
-              onSelectNode={(node) => {
-                setSelectedNode(node)
-                setSelectedEdge(null)
-              }}
-              onSelectEdge={(edge) => {
-                setSelectedEdge(edge)
-                setSelectedNode(null)
-              }}
-            />
+            <>
+              {isSyncing && (
+                <div className="absolute top-3 right-3 flex items-center gap-2 rounded-full border border-cyan-500/30 bg-black/70 px-3 py-1 text-[11px] font-mono text-cyan-400 backdrop-blur-md z-30 pointer-events-none shadow-[0_0_12px_rgba(34,211,238,0.25)]">
+                  <RefreshCw className="h-3 w-3 animate-spin text-cyan-400" />
+                  <span>Syncing NetworkX graph...</span>
+                </div>
+              )}
+              <ReactFlowGraph
+                nodes={filteredNodes}
+                edges={filteredEdges}
+                selectedNodeId={selectedNode?.id}
+                selectedEdgeId={selectedEdge?.id}
+                onSelectNode={(node) => {
+                  setSelectedNode(node)
+                  setSelectedEdge(null)
+                }}
+                onSelectEdge={(edge) => {
+                  setSelectedEdge(edge)
+                  setSelectedNode(null)
+                }}
+              />
+            </>
           )}
 
           {/* Side Drawer for Node / Edge Intelligence & Provenance */}
