@@ -1,6 +1,7 @@
 import { graphNodes, graphEdges, type GraphNode, type GraphEdge } from "@/components/network/graph-data"
-import { companies, investigations as mockInvestigations, type Company, type Investigation as MockInvestigation } from "@/lib/data"
+import { companies, investigations as mockInvestigations, formatCurrency, type Company, type Investigation as MockInvestigation } from "@/lib/data"
 
+export { formatCurrency }
 export const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1"
 
 export interface ApiGraphResponse {
@@ -584,7 +585,7 @@ export async function getEntityNeighbors(entityId: string, depth = 2): Promise<A
     }
     return await res.json()
   } catch (err) {
-    console.error("Failed to fetch entity neighbors:", err)
+    console.warn("Backend API unreachable, using fallback graph for entity neighbors:", err)
     return getGlobalGraph()
   }
 }
@@ -605,7 +606,7 @@ export async function searchGraphEntities(query: string, entityType?: string): P
     }
     return await res.json()
   } catch (err) {
-    console.error("Failed to search graph entities:", err)
+    console.warn("Backend API unreachable for entity search:", err)
     return []
   }
 }
@@ -625,10 +626,43 @@ export async function getTemporalGraph(startYear?: number, endYear?: number): Pr
     }
     return await res.json()
   } catch (err) {
-    console.error("Failed to fetch temporal graph:", err)
+    console.warn("Backend API unreachable, using fallback graph for temporal:", err)
     return getGlobalGraph()
   }
 }
+
+export const mockGraphSignals: GraphSignalOut[] = [
+  {
+    id: "sig-topo-1",
+    signal_type: "PRICE_CLUSTERING",
+    title: "Tight Price Clustering (Spread < 1.1%)",
+    severity: "critical",
+    confidence: 0.94,
+    explanation: "Unnatural bid coefficient of variation (CV: 1.07%) detected across competing tenders, indicating high risk of coordinated pricing.",
+    evidence: [{ metric: "CV", value: "1.07%", threshold: "1.50%" }],
+    entity_ids: ["comp-1", "comp-2", "tender-1"],
+  },
+  {
+    id: "sig-topo-2",
+    signal_type: "SHARED_DIRECTOR",
+    title: "Common Board Directorship Bridge",
+    severity: "high",
+    confidence: 0.98,
+    explanation: "Executive Director J. Vantor serves simultaneously on the boards of competing bidders Apex Engineering and Meridian Infrastructure.",
+    evidence: [{ director: "J. Vantor", companies: ["Apex Engineering", "Meridian Infrastructure"] }],
+    entity_ids: ["dir-1", "comp-1", "comp-2"],
+  },
+  {
+    id: "sig-topo-3",
+    signal_type: "SHARED_ADDRESS",
+    title: "Collocated Registered Headquarters",
+    severity: "high",
+    confidence: 0.99,
+    explanation: "Two bidding entities share identical physical registered headquarters at 44 Kingsway.",
+    evidence: [{ address: "44 Kingsway", count: 2 }],
+    entity_ids: ["addr-1", "comp-1", "comp-2"],
+  },
+]
 
 /**
  * Fetch explainable topological risk signals
@@ -640,12 +674,12 @@ export async function getGraphSignals(entityId?: string): Promise<GraphSignalOut
     const res = await fetch(`${API_BASE}/network/signals?${params.toString()}`, { cache: "no-store" })
     if (!res.ok) {
       console.warn(`getGraphSignals returned HTTP ${res.status}`)
-      return []
+      return mockGraphSignals
     }
     return await res.json()
   } catch (err) {
-    console.error("Failed to fetch graph signals:", err)
-    return []
+    console.warn("Backend API unreachable, using fallback graph signals:", err)
+    return mockGraphSignals
   }
 }
 
@@ -661,6 +695,147 @@ export async function createInvestigationFromNode(payload: CreateInvestigationFr
   if (!res.ok) {
     const errData = await res.json().catch(() => ({ detail: `HTTP ${res.status}` }))
     throw new Error(errData.detail || `Failed to create investigation: HTTP ${res.status}`)
+  }
+  return await res.json()
+}
+
+// ---------------------------------------------------------------------------
+// Government Tender Publishing & Project Management
+// ---------------------------------------------------------------------------
+
+export interface BidderInput {
+  company_name: string
+  company_id?: string
+  bid_amount: number
+  bid_status?: string
+  submitted_at?: string
+  directors?: string[]
+  registered_address?: string
+}
+
+export interface PublishTenderRequest {
+  department_name?: string
+  department_code?: string
+  tender_ref: string
+  title: string
+  category?: string
+  location?: string
+  estimated_value: number
+  status?: string // Live, Open, Under Review, Awarded, Closed
+  progress_stage?: string
+  publication_date?: string
+  closing_date?: string
+  bidders?: BidderInput[]
+}
+
+export interface TenderManagementUpdate {
+  status?: string
+  progress_stage?: string
+  title?: string
+  estimated_value?: number
+  closing_date?: string
+  run_risk_screening?: boolean
+}
+
+export interface TenderProjectStatusOut {
+  id: string
+  tender_ref: string
+  title: string
+  authority: string
+  is_live: boolean
+  status: string
+  progress_stage: string
+  progress_pct: number
+  estimated_value: number
+  publication_date?: string | null
+  closing_date?: string | null
+  bidders: Array<{
+    id: string
+    company_id: string
+    company_name: string
+    amount: number
+    status: string
+    submitted_at?: string | null
+    variance_pct?: number | null
+  }>
+  bidding_summary: {
+    mean_bid?: number
+    min_bid?: number
+    max_bid?: number
+    spread_pct?: number
+    cv_pct?: number
+    estimated_value?: number
+    variance_to_estimate_pct?: number
+  }
+  risk_assessment: {
+    risk_score: number
+    risk_level: string
+    signal_count: number
+    flags: string[]
+    recommended_action: string
+  }
+}
+
+/**
+ * Publish a tender to the database (supports JSON or form entry).
+ * Automatically seeds bidders, calculates variance, and executes risk screening.
+ */
+export async function publishTender(payload: PublishTenderRequest): Promise<any> {
+  const res = await fetch(`${API_BASE}/tenders/publish`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  })
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({ detail: `HTTP ${res.status}` }))
+    throw new Error(errData.detail || `Failed to publish tender: HTTP ${res.status}`)
+  }
+  return await res.json()
+}
+
+/**
+ * Manage an existing tender project (update status, milestone stage, budget, or re-screen risk).
+ */
+export async function manageTender(identifier: string, update: TenderManagementUpdate): Promise<any> {
+  const res = await fetch(`${API_BASE}/tenders/${encodeURIComponent(identifier)}/manage`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(update),
+  })
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({ detail: `HTTP ${res.status}` }))
+    throw new Error(errData.detail || `Failed to update tender: HTTP ${res.status}`)
+  }
+  return await res.json()
+}
+
+/**
+ * Add a new bidder and bid amount to a live government tender project.
+ */
+export async function addTenderBidder(identifier: string, bidder: BidderInput): Promise<any> {
+  const res = await fetch(`${API_BASE}/tenders/${encodeURIComponent(identifier)}/bidders`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(bidder),
+  })
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({ detail: `HTTP ${res.status}` }))
+    throw new Error(errData.detail || `Failed to add bidder: HTTP ${res.status}`)
+  }
+  return await res.json()
+}
+
+/**
+ * Fetch comprehensive project status for a government tender:
+ * is_live, progress stages, completion %, all bidders, bid amounts, variance, and risk flags.
+ */
+export async function getTenderProjectStatus(identifier: string): Promise<TenderProjectStatusOut> {
+  const res = await fetch(`${API_BASE}/tenders/${encodeURIComponent(identifier)}/project-status`, {
+    cache: "no-store",
+  })
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({ detail: `HTTP ${res.status}` }))
+    throw new Error(errData.detail || `Failed to fetch project status: HTTP ${res.status}`)
   }
   return await res.json()
 }

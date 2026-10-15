@@ -40,8 +40,11 @@ import {
   type ValidationErrorDetail,
 } from "@/lib/api-client"
 import { cn } from "@/lib/utils"
+import { TenderPublisherManager } from "@/components/government/tender-publisher-manager"
+import { Radio } from "lucide-react"
 
 export default function GovernmentDataIngestionPage() {
+  const [mainTab, setMainTab] = useState<"publisher" | "bulk_upload">("publisher")
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [fileError, setFileError] = useState<string | null>(null)
   const [isValidating, setIsValidating] = useState(false)
@@ -167,8 +170,8 @@ export default function GovernmentDataIngestionPage() {
   return (
     <div className="animate-fade-in space-y-6">
       <PageHeader
-        title="Government Procurement Ingestion"
-        subtitle="Secure, strictly validated bulk JSON upload for government tenders, registered companies, participants, and bids."
+        title="Government Procurement & Tender Operations"
+        subtitle="Publish procurement tenders, manage live project milestones, review participating bidders and bid amounts, and upload institutional dossiers."
         actions={
           <a
             href={`${API_BASE}/government/uploads/sample-template/download`}
@@ -182,8 +185,45 @@ export default function GovernmentDataIngestionPage() {
         }
       />
 
-      {/* Main Upload & Validation Card */}
-      <GlassCard level="panel" className="p-6 space-y-6">
+      {/* Primary Workspace Navigation Tabs */}
+      <div className="flex items-center gap-2 border-b border-white/10 pb-2">
+        <button
+          type="button"
+          onClick={() => setMainTab("publisher")}
+          className={cn(
+            "flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all",
+            mainTab === "publisher"
+              ? "bg-accent text-background shadow-lg shadow-accent/20"
+              : "bg-white/[0.03] text-muted-foreground hover:bg-white/[0.06] hover:text-foreground border border-white/8"
+          )}
+        >
+          <Building2 className="h-4 w-4" />
+          Tender Publisher & Project Manager
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setMainTab("bulk_upload")}
+          className={cn(
+            "flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all",
+            mainTab === "bulk_upload"
+              ? "bg-accent text-background shadow-lg shadow-accent/20"
+              : "bg-white/[0.03] text-muted-foreground hover:bg-white/[0.06] hover:text-foreground border border-white/8"
+          )}
+        >
+          <Upload className="h-4 w-4" />
+          Bulk Dossier Ingestion (JSON Files)
+        </button>
+      </div>
+
+      {/* TAB 1: Tender Publisher & Project Manager */}
+      {mainTab === "publisher" && <TenderPublisherManager />}
+
+      {/* TAB 2: Bulk File Ingestion & Audit Log */}
+      {mainTab === "bulk_upload" && (
+        <div className="space-y-6">
+          {/* Main Upload & Validation Card */}
+          <GlassCard level="panel" className="p-6 space-y-6">
         <div>
           <h2 className="text-base font-semibold text-foreground flex items-center gap-2">
             <Database className="h-4 w-4 text-accent" />
@@ -563,6 +603,8 @@ export default function GovernmentDataIngestionPage() {
           </div>
         )}
       </GlassCard>
+        </div>
+      )}
 
       {/* Audit Detail Modal */}
       {selectedAuditForModal && (

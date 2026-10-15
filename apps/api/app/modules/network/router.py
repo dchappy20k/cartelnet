@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 
 from app.db.session import get_db
-from app.modules.ingestion.service import DEFAULT_ORG_ID
+from app.core.config import DEFAULT_ORG_ID
 from app.modules.auth.dependencies import get_current_token_payload, get_active_organization_id
 from app.modules.network.service import NetworkService
 from app.modules.network.schemas import (

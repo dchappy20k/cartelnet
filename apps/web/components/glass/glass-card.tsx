@@ -16,11 +16,11 @@ export function GlassCard({
   return (
     <div
       className={cn(
-        "rounded-lg",
+        "rounded-xl relative overflow-hidden transition-all duration-300",
         level === "panel" && "glass-panel",
         level === "card" && "glass",
         level === "chrome" && "glass-chrome",
-        hover && "glass-hover",
+        hover && "glass-hover cursor-pointer",
         className,
       )}
       {...props}

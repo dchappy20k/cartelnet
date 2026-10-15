@@ -15,7 +15,7 @@ import { SignalRow } from "@/components/signals/signal-row"
 import { tenders, signals, formatCurrency } from "@/lib/data"
 import { downloadReportPdf } from "@/lib/api-client"
 
-const TABS = ["Overview", "Bidders", "Risk Signals", "Network", "Timeline", "Evidence", "Investigation"]
+const TABS = ["Overview", "Bidders", "Risk Signals", "Network", "Timeline", "Evidence"]
 
 const bidders = [
   { name: "Meridian Civil Works Ltd.", bid: 46.2, status: "Awarded", risk: "high" as const },
@@ -209,12 +209,7 @@ export default function Tender360({ params }: { params: Promise<{ id: string }> 
         </div>
       )}
 
-      {tab === "Investigation" && (
-        <GlassCard level="panel" className="flex flex-col items-center justify-center gap-3 p-12 text-center">
-          <p className="text-sm text-muted-foreground">No active investigation is linked. Create one to begin a structured review.</p>
-          <Link href="/investigations"><GlassButton variant="accent" size="md">Open Investigations</GlassButton></Link>
-        </GlassCard>
-      )}
+
     </div>
   )
 }

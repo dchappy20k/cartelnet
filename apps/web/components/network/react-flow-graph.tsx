@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useMemo, useEffect, useCallback, useState } from "react"
+import React, { useMemo, useEffect, useCallback, useState, useRef } from "react"
 import {
   ReactFlow,
   Controls,
@@ -18,9 +18,10 @@ import "@xyflow/react/dist/style.css"
 
 import { CustomNode } from "./nodes/custom-node"
 import { type GraphNode, type GraphEdge } from "./graph-data"
+import { HoverFlashCard, type HoverTarget } from "./hover-flash-card"
 
 const nodeTypes = {
-  custom: CustomNode,
+  custom: CustomNode as any,
 }
 
 interface ReactFlowGraphProps {
@@ -194,13 +195,65 @@ function InnerGraph({
     [inputEdges, onSelectEdge, onSelectNode]
   )
 
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [hoverTarget, setHoverTarget] = useState<HoverTarget | null>(null)
+
+  const onNodeMouseEnter = useCallback(
+    (event: React.MouseEvent, node: Node) => {
+      const original = inputNodes.find((n) => n.id === node.id)
+      setHoverTarget({
+        type: "node",
+        node: original || (node.data as any) || null,
+        clientX: event.clientX,
+        clientY: event.clientY,
+      })
+    },
+    [inputNodes]
+  )
+
+  const onNodeMouseMove = useCallback((event: React.MouseEvent) => {
+    setHoverTarget((prev) =>
+      prev ? { ...prev, clientX: event.clientX, clientY: event.clientY } : null
+    )
+  }, [])
+
+  const onNodeMouseLeave = useCallback(() => {
+    setHoverTarget(null)
+  }, [])
+
+  const onEdgeMouseEnter = useCallback(
+    (event: React.MouseEvent, edge: Edge) => {
+      const original = inputEdges.find(
+        (e) => (e.id || `edge-${(e as any).from}-${(e as any).to}`) === edge.id
+      )
+      setHoverTarget({
+        type: "edge",
+        edge: original || (edge.data as any) || null,
+        clientX: event.clientX,
+        clientY: event.clientY,
+      })
+    },
+    [inputEdges]
+  )
+
+  const onEdgeMouseMove = useCallback((event: React.MouseEvent) => {
+    setHoverTarget((prev) =>
+      prev ? { ...prev, clientX: event.clientX, clientY: event.clientY } : null
+    )
+  }, [])
+
+  const onEdgeMouseLeave = useCallback(() => {
+    setHoverTarget(null)
+  }, [])
+
   const onPaneClick = useCallback(() => {
     onSelectNode(null)
     onSelectEdge(null)
+    setHoverTarget(null)
   }, [onSelectNode, onSelectEdge])
 
   return (
-    <div className="h-full w-full relative">
+    <div ref={containerRef} className="h-full w-full relative overflow-hidden">
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -210,6 +263,12 @@ function InnerGraph({
         onNodeClick={onNodeClick}
         onEdgeClick={onEdgeClick}
         onPaneClick={onPaneClick}
+        onNodeMouseEnter={onNodeMouseEnter}
+        onNodeMouseMove={onNodeMouseMove}
+        onNodeMouseLeave={onNodeMouseLeave}
+        onEdgeMouseEnter={onEdgeMouseEnter}
+        onEdgeMouseMove={onEdgeMouseMove}
+        onEdgeMouseLeave={onEdgeMouseLeave}
         fitView
         minZoom={0.15}
         maxZoom={2.5}
@@ -230,6 +289,14 @@ function InnerGraph({
           maskColor="rgba(0, 0, 0, 0.7)"
         />
       </ReactFlow>
+
+      {/* Hovering Flash Card with gist & importance */}
+      <HoverFlashCard
+        hover={hoverTarget}
+        allNodes={inputNodes}
+        allEdges={inputEdges}
+        containerRect={containerRef.current?.getBoundingClientRect()}
+      />
     </div>
   )
 }

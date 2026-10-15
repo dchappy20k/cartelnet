@@ -19,8 +19,7 @@ from app.modules.tenders.models import Tender
 from app.modules.companies.models import Company, Director, CompanyDirector, Address
 from app.modules.bids.models import Bid
 
-
-DEFAULT_ORG_ID = "org-cartelnet-demo"
+from app.core.config import DEFAULT_ORG_ID
 
 
 class IngestionService:

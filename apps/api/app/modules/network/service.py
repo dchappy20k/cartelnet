@@ -76,10 +76,21 @@ class NetworkService:
         span_y = (max_y - min_y) if (max_y - min_y) > 1e-5 else 1.0
 
         scaled_pos: Dict[str, Tuple[float, float]] = {}
-        for nid, (x, y) in raw_pos.items():
-            if fixed and nid == pinned_node:
-                scaled_pos[nid] = (400.0, 250.0)
-            else:
+        n_count = len(G.nodes)
+
+        if pinned_node:
+            # Pinned ego subgraph保持 800x500 范围，pinned_node 在 (400.0, 250.0)
+            for nid, (x, y) in raw_pos.items():
+                if nid == pinned_node:
+                    scaled_pos[nid] = (400.0, 250.0)
+                else:
+                    norm_x = (x - min_x) / span_x
+                    norm_y = (y - min_y) / span_y
+                    scaled_x = round(100.0 + norm_x * 600.0, 1)
+                    scaled_y = round(80.0 + norm_y * 340.0, 1)
+                    scaled_pos[nid] = (scaled_x, scaled_y)
+        else:
+            for nid, (x, y) in raw_pos.items():
                 norm_x = (x - min_x) / span_x
                 norm_y = (y - min_y) / span_y
                 scaled_x = round(100.0 + norm_x * 600.0, 1)

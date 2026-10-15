@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from typing import List
 
 from app.db.session import get_db
-from app.modules.ingestion.service import DEFAULT_ORG_ID
+from app.core.config import DEFAULT_ORG_ID
 from app.modules.reports.service import ReportService
 from app.modules.reports.schemas import (
     ReportGenerateRequest,

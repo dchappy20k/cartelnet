@@ -153,7 +153,7 @@ export function SignalsDock({
                       Documented Evidence
                     </span>
                     <div className="mt-1 flex flex-wrap gap-2">
-                      {activeSignal.evidence.map((ev, i) => (
+                      {activeSignal.evidence.map((ev: any, i: number) => (
                         <div
                           key={i}
                           className="rounded-md border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[11px] text-white/90"

@@ -2,8 +2,9 @@ from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException, s
 from sqlalchemy.orm import Session
 from typing import List, Optional
 
+from app.core.config import DEFAULT_ORG_ID
 from app.db.session import get_db
-from app.modules.ingestion.service import IngestionService, DEFAULT_ORG_ID
+from app.modules.ingestion.service import IngestionService
 from app.modules.ingestion.repository import IngestionRepository
 from app.modules.ingestion.schemas import ValidationResult, CommitResult, ImportJobOut
 

@@ -1,7 +1,14 @@
 "use client"
 
-import { useMemo, useState } from "react"
-import { graphNodes as defaultNodes, graphEdges as defaultEdges, nodeStyles, type GraphNode, type GraphEdge } from "./graph-data"
+import { useMemo, useState, useRef } from "react"
+import {
+  graphNodes as defaultNodes,
+  graphEdges as defaultEdges,
+  nodeStyles,
+  type GraphNode,
+  type GraphEdge,
+} from "./graph-data"
+import { HoverFlashCard, type HoverTarget } from "./hover-flash-card"
 
 interface NetworkGraphProps {
   onSelectCompany: (companyId: string) => void
@@ -9,9 +16,16 @@ interface NetworkGraphProps {
   edges?: GraphEdge[]
 }
 
-export function NetworkGraph({ onSelectCompany, nodes: propNodes, edges: propEdges }: NetworkGraphProps) {
+export function NetworkGraph({
+  onSelectCompany,
+  nodes: propNodes,
+  edges: propEdges,
+}: NetworkGraphProps) {
   const currentNodes = propNodes && propNodes.length > 0 ? propNodes : defaultNodes
   const currentEdges = propEdges && propEdges.length > 0 ? propEdges : defaultEdges
+
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [hoverTarget, setHoverTarget] = useState<HoverTarget | null>(null)
 
   const firstSelectable = currentNodes[0]?.id || null
   const [selected, setSelected] = useState<string | null>(firstSelectable)
@@ -36,7 +50,8 @@ export function NetworkGraph({ onSelectCompany, nodes: propNodes, edges: propEdg
     return set
   }, [selected, currentEdges])
 
-  const isEdgeActive = (from: string, to: string) => selected != null && (from === selected || to === selected)
+  const isEdgeActive = (from: string, to: string) =>
+    selected != null && (from === selected || to === selected)
 
   const handleClick = (node: GraphNode) => {
     setSelected(node.id)
@@ -47,8 +62,17 @@ export function NetworkGraph({ onSelectCompany, nodes: propNodes, edges: propEdg
   }
 
   return (
-    <div className="relative h-full w-full">
-      <svg viewBox="0 0 800 500" className="h-full w-full" role="img" aria-label="Entity relationship graph">
+    <div
+      ref={containerRef}
+      className="relative h-full w-full overflow-hidden"
+      onMouseLeave={() => setHoverTarget(null)}
+    >
+      <svg
+        viewBox="0 0 800 500"
+        className="h-full w-full"
+        role="img"
+        aria-label="Entity relationship graph"
+      >
         <defs>
           <radialGradient id="node-glow" cx="50%" cy="50%" r="50%">
             <stop offset="0%" stopColor="white" stopOpacity="0.25" />
@@ -62,24 +86,68 @@ export function NetworkGraph({ onSelectCompany, nodes: propNodes, edges: propEdg
           const to = (e as any).to || (e as any).target
           const a = nodeMap.get(from)
           const b = nodeMap.get(to)
-          if (!a || !b) return null
+          if (
+            !a ||
+            !b ||
+            a.x === undefined ||
+            a.y === undefined ||
+            b.x === undefined ||
+            b.y === undefined
+          )
+            return null
 
           const active = isEdgeActive(from, to)
           const mx = (a.x + b.x) / 2
           const my = (a.y + b.y) / 2
+
           return (
-            <g key={i}>
+            <g
+              key={i}
+              className="cursor-pointer"
+              onMouseEnter={(ev) =>
+                setHoverTarget({
+                  type: "edge",
+                  edge: e,
+                  clientX: ev.clientX,
+                  clientY: ev.clientY,
+                })
+              }
+              onMouseMove={(ev) =>
+                setHoverTarget((prev) =>
+                  prev ? { ...prev, clientX: ev.clientX, clientY: ev.clientY } : null
+                )
+              }
+              onMouseLeave={() => setHoverTarget(null)}
+            >
+              {/* Invisible thicker hit-testing stroke */}
               <line
                 x1={a.x}
                 y1={a.y}
                 x2={b.x}
                 y2={b.y}
-                stroke={active ? "rgba(34,211,238,0.7)" : "rgba(255,255,255,0.12)"}
+                stroke="transparent"
+                strokeWidth={10}
+              />
+              <line
+                x1={a.x}
+                y1={a.y}
+                x2={b.x}
+                y2={b.y}
+                stroke={active ? "rgba(34,211,238,0.7)" : "rgba(255,255,255,0.15)"}
                 strokeWidth={active ? 2 : 1}
-                style={active ? { filter: "drop-shadow(0 0 5px rgba(34,211,238,0.7))" } : undefined}
+                style={
+                  active
+                    ? { filter: "drop-shadow(0 0 5px rgba(34,211,238,0.7))" }
+                    : undefined
+                }
               />
               {active && e.label && (
-                <text x={mx} y={my - 4} textAnchor="middle" className="fill-[rgba(255,255,255,0.85)] font-mono text-[9px]">
+                <text
+                  x={mx}
+                  y={my - 4}
+                  textAnchor="middle"
+                  className="fill-[rgba(255,255,255,0.85)] font-mono text-[9px]"
+                >
                   {e.label}
                 </text>
               )}
@@ -96,9 +164,23 @@ export function NetworkGraph({ onSelectCompany, nodes: propNodes, edges: propEdg
             <g
               key={n.id}
               transform={`translate(${n.x},${n.y})`}
-              className="cursor-pointer"
+              className="cursor-pointer group"
               opacity={dim ? 0.3 : 1}
               onClick={() => handleClick(n)}
+              onMouseEnter={(ev) =>
+                setHoverTarget({
+                  type: "node",
+                  node: n,
+                  clientX: ev.clientX,
+                  clientY: ev.clientY,
+                })
+              }
+              onMouseMove={(ev) =>
+                setHoverTarget((prev) =>
+                  prev ? { ...prev, clientX: ev.clientX, clientY: ev.clientY } : null
+                )
+              }
+              onMouseLeave={() => setHoverTarget(null)}
               style={{ transition: "opacity 200ms ease, transform 300ms ease" }}
             >
               {isSel && <circle r={style.r + 14} fill="url(#node-glow)" />}
@@ -117,7 +199,11 @@ export function NetworkGraph({ onSelectCompany, nodes: propNodes, edges: propEdg
                 fill="rgba(10,12,18,0.92)"
                 stroke={style.color}
                 strokeWidth="2"
-                style={{ filter: `drop-shadow(0 0 ${isSel ? 12 : 5}px ${style.color}${isSel ? "cc" : "66"})` }}
+                style={{
+                  filter: `drop-shadow(0 0 ${isSel ? 12 : 5}px ${style.color}${
+                    isSel ? "cc" : "66"
+                  })`,
+                }}
               />
               <circle r={style.r * 0.35} fill={style.color} opacity={0.9} />
               <text
@@ -137,11 +223,22 @@ export function NetworkGraph({ onSelectCompany, nodes: propNodes, edges: propEdg
       <div className="absolute bottom-3 left-3 flex flex-wrap gap-x-4 gap-y-1.5 rounded-lg border border-white/8 bg-black/50 p-2.5 backdrop-blur-md">
         {Object.entries(nodeStyles).map(([type, s]) => (
           <span key={type} className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-            <span className="h-2 w-2 rounded-full" style={{ background: s.color, boxShadow: `0 0 6px ${s.color}` }} />
+            <span
+              className="h-2 w-2 rounded-full"
+              style={{ background: s.color, boxShadow: `0 0 6px ${s.color}` }}
+            />
             {s.label}
           </span>
         ))}
       </div>
+
+      {/* Hovering Flash Card with gist & importance */}
+      <HoverFlashCard
+        hover={hoverTarget}
+        allNodes={currentNodes}
+        allEdges={currentEdges}
+        containerRect={containerRef.current?.getBoundingClientRect()}
+      />
     </div>
   )
 }
